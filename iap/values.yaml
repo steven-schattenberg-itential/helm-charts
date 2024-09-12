@@ -1,0 +1,195 @@
+---
+# Default values for iap.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 3
+namespace: "default-pet"
+
+# image The Itential image to use, its version, and its location
+image:
+  repository: "itential.jfrog.io/itential-docker/automation-platform"
+  name: "itential.jfrog.io/itential-docker/automation-platform"
+  tag: "2023.2.6"
+  pullPolicy: "IfNotPresent"
+
+# imagePullSecrets The secrets object used to pull the image from the repo
+imagePullSecrets:
+  - name: "jfrogcred"
+
+# storageClass This is used to configure the storage class object which governs
+# how the mounted volumes are created.
+storageClass:
+  enabled: true
+  name: "iap-ebs-gp3"
+  provisioner: "ebs.csi.aws.com"
+  reclaimPolicy: "Retain"
+  volumeBindingMode: "WaitForFirstConsumer"
+  parameters:
+    type: "gp3"
+
+# Persistent volumes and persitent volume claims. These are used for Itential
+# application logs and for Itential adapters.
+persistentVolumeClaims:
+  enabled: false
+  # assetClaim This represents the claim for the persistence for the adapters and other
+  # custom applications that may have been developed by the customer.
+  assetClaim:
+    # name The name of the persistent volume, must match the volumeMount name
+    name: "iap-assets-volume"
+    # storageClassName The name of the StorageClass object
+    storageClassName: "iap-ebs-gp3"
+    # storage The requested amount of storage
+    storage: "10Gi"
+    # accessModes The access mode used by the volume claim when mounting the volume
+    accessModes:
+      - "ReadWriteOnce"
+  # logClaim This represents the claim for the persistence for the log files created and
+  # written to by the IAP application
+  logClaim:
+    # name The name of the persistent volume, must match the volumeMount name
+    name: "iap-logs-volume"
+    # storageClassName The name of the StorageClass object
+    storageClassName: "iap-ebs-gp3"
+    # storage The requested amount of storage
+    storage: "10Gi"
+    # accessModes The access mode used by the volume claim when mounting the volume
+    accessModes:
+      - "ReadWriteOnce"
+
+# service The Kubernetes service object for this application
+service:
+  # type The service type
+  type: "ClusterIP"
+  # name The name of this Kubernetes service object
+  name: "iap-service"
+  # port The port that this service object is listening on
+  port: 80
+  # targetPort The application port that this service object will send requests to
+  targetPort: 3000
+
+# ingress The Kubernetes ingress object for this application.
+ingress:
+  # enabled The ingress object can be disabled and will not be created with this set to false
+  enabled: true
+  # name The name of this Kubernetes ingress object
+  name: "iap-ingress"
+  # className The ingress controller class name
+  className: "alb-public"
+  # annotations The annotations for this ingress object. These are passed into the template
+  # as is and will render as you see here.
+  annotations:
+    alb.ingress.kubernetes.io/backend-protocol: "HTTP"
+    alb.ingress.kubernetes.io/healthcheck-path: "/health/status"
+    alb.ingress.kubernetes.io/healthcheck-port: "3000"
+    alb.ingress.kubernetes.io/healthcheck-protocol: "HTTP"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/target-group-attributes: "stickiness.enabled=true"
+    alb.ingress.kubernetes.io/target-type: "ip"
+  # hosts The list of hosts for this ingress and their associated properties
+  hosts:
+    - host: "iap.iap-dev.itential.io"
+      paths:
+        - path: "/"
+          pathType: "Prefix"
+  tls: []
+
+# Deployment is not supported and will be removed
+deployment:
+  enabled: false
+
+statefulset:
+  enabled: true
+
+podAnnotations: {}
+podLabels: {}
+securityContext: {}
+
+# podSecurityContext The pods will mount some persistent volumes. These settings
+# allow for that to happen.
+podSecurityContext:
+  fsGroup: 1001
+  runAsUser: 1001
+  runAsNonRoot: true
+
+# resources Container resources
+resources:
+  limits:
+    memory: "14Gi"
+  requests:
+    cpu: "3"
+    memory: "14Gi"
+
+# livenessProbe The liveness probe used in the deployment object
+livenessProbe:
+  initialDelaySeconds: 180
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+  httpGet:
+    path: "/health/status"
+    port: 3000
+
+# readinessProbe The readiness probe used in the deployment object
+readinessProbe:
+  initialDelaySeconds: 180
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+  httpGet:
+    path: "/health/status"
+    port: 3000
+
+# Startup probe...
+
+# Configuration properties for Itential properties.json file. This is the main
+# config file for the Itential application. This is used to populate a config map
+# object which is then mounted as a file/volume.
+propertiesJson:
+  profileId: "Local_AAA"
+  dbAuth: false
+  dbUsername: "pet-default-iap"
+  dbPassword: "ktRvcqKKy8yvPqzn"
+  dbName: "pet-default-iap"
+  acceptInvalidCerts: true
+  checkServerIdentity: false
+  sslEnabled: true
+  sslCA: ""
+  sslValidate: false
+  dbUrl: "mongodb+srv://pet-default-iap:ktRvcqKKy8yvPqzn@iap-cloud-dev02-use2.ug7wh.mongodb.net/?retryWrites=true&w=majority&appName=iap-cloud-dev02-use2"
+  processJobsOnStart: true
+  processTasksOnStart: true
+
+# Additional volumes on the output Deployment definition.
+volumes:
+  # config-volume is a configmap that contains files that are required by the IAG
+  # application and can be customized.
+  - name: "config-volume"
+    configMap:
+      name: "iap-config-map"
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts:
+  # Uses the configmap to mount a config file at the below path
+  - name: "config-volume"
+    mountPath: "/opt/itential/automation-platform/config/custom-properties.json"
+    subPath: "custom-properties.json"
+  # Uses a persistent volume claim to mount a directory to write IAP log files to
+  - name: "iap-logs-volume"
+    mountPath: "/var/log/itential"
+  # Uses a persistent volume claim to mount a directory that includes adapters and apps
+  - name: "iap-assets-volume"
+    mountPath: "/opt/custom"
+
+nodeSelector:
+  itential.io/role: "iap-p"
+
+tolerations:
+  - effect: "NoSchedule"
+    key: "itential.io/role"
+    operator: "Equal"
+    value: "iap-p"
+
+affinity: {}

@@ -1,0 +1,202 @@
+---
+# Default values for iag.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 3
+namespace: "default-pet"
+
+# image The Itential image to use, its version, and its location
+image:
+  repository: "itential.jfrog.io/itential-docker/automation-gateway"
+  name: "itential.jfrog.io/itential-docker/automation-gateway"
+  tag: "2023.2.9"
+  pullPolicy: "IfNotPresent"
+
+# imagePullSecrets The secrets object used to pull the image from the repo
+imagePullSecrets:
+  - name: "jfrogcred"
+
+# storageClass This is used to configure the storage class object which governs
+# how the mounted volumes are created.
+storageClass:
+  enabled: true
+  name: "iag-ebs-gp3"
+  provisioner: "ebs.csi.aws.com"
+  reclaimPolicy: "Retain"
+  volumeBindingMode: "WaitForFirstConsumer"
+  parameters:
+    type: "gp3"
+
+# persistentVolumeClaims These are used for Itential Automation Gateway persistence
+# and for any customer specific assets (ansible or python scripts).
+persistentVolumeClaims:
+  enabled: true
+  # dataClaim This represents the claim for the persistence for the sqlite data
+  # required by IAG.
+  dataClaim:
+    # name The name of the persistent volume, must match the volumeMount name
+    name: "iag-data-volume"
+    # storageClassName The name of the StorageClass object
+    storageClassName: "iag-ebs-gp3"
+    # storage The requested amount of storage
+    storage: "10Gi"
+    # accessModes The access mode used by the volume claim when mounting the volume
+    accessModes:
+      - "ReadWriteOnce"
+  # codeClaim This represents the claim for the location of all the customer authored
+  # scripts, ansible code, and other customizations.
+  codeClaim:
+    # name The name of the persistent volume, must match the volumeMount name
+    name: "iag-code-volume"
+    # storageClassName The name of the StorageClass object
+    storageClassName: "iag-ebs-gp3"
+    # storage The requested amount of storage
+    storage: "10Gi"
+    # accessModes The access mode used by the volume claim when mounting the volume
+    accessModes:
+      - "ReadWriteOnce"
+
+# service The Kubernetes service object for this application
+service:
+  # type The service type
+  type: "ClusterIP"
+  # name The name of this Kubernetes service object
+  name: "iag-service"
+  # port The port that this service object is listening on
+  port: 80
+  # targetPort The application port that this service object will send requests to
+  targetPort: 8083
+
+# ingress The Kubernetes ingress object for this application.
+ingress:
+  # enabled The ingress object can be disabled and will not be created with this set to false
+  enabled: true
+  # name The name of this Kubernetes ingress object
+  name: "iag-ingress"
+  # className The ingress controller class name
+  className: "alb-public"
+  # annotations The annotations for this ingress object. These are passed into the template
+  # as is and will render as you see here.
+  annotations:
+    alb.ingress.kubernetes.io/backend-protocol: "HTTP"
+    alb.ingress.kubernetes.io/healthcheck-path: "/api/v2.0/poll"
+    alb.ingress.kubernetes.io/healthcheck-port: "8083"
+    alb.ingress.kubernetes.io/healthcheck-protocol: "HTTP"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/target-group-attributes: "stickiness.enabled=true"
+    alb.ingress.kubernetes.io/target-type: "ip"
+  # hosts The list of hosts for this ingress and their associated properties
+  hosts:
+    - host: "iag.iap-dev.itential.io"
+      paths:
+        - path: "/"
+          pathType: "Prefix"
+  tls: []
+
+# Deployment is not supported and will be removed
+deployment:
+  enabled: false
+
+statefulset:
+  enabled: true
+
+podAnnotations: {}
+podLabels: {}
+securityContext: {}
+
+# podSecurityContext The pods will mount some persistent volumes. These settings
+# allow for that to happen.
+podSecurityContext:
+  fsGroup: 1001
+  runAsUser: 1001
+  runAsNonRoot: true
+
+resources:
+  limits:
+    cpu: "1000m"
+    memory: "256Mi"
+  requests:
+    cpu: "1000m"
+    memory: "256Mi"
+
+# livenessProbe The liveness probe used in the deployment object
+livenessProbe:
+  initialDelaySeconds: 120
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+  httpGet:
+    path: "/api/v2.0/poll"
+    port: 8083
+
+# readinessProbe The readiness probe used in the deployment object
+readinessProbe:
+  initialDelaySeconds: 120
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+  httpGet:
+    path: "/api/v2.0/poll"
+    port: 8083
+
+# propertiesYaml This is used to generate the IAG config file that the IAG
+# application will use. These properties are all passed into the configmap
+# which is then mounted as a file and read by the application.
+propertiesYaml:
+  port: 8083
+  bindAddress: "0.0.0.0"
+  serverThreads: 8
+  logDir: "/var/lib/automation-gateway"
+  dataDir: "/var/lib/automation-gateway"
+  enableAnsible: true
+  ansibleDebug: false
+  customDir: "/usr/share/automation-gateway"
+  enableHttp: false
+  enableNetconf: true
+  enableNetmiko: false
+  enableNornir: false
+  enableScripts: true
+  enablePythonVenvs: true
+  enableGrpc: false
+  enableGit: true
+
+# volumes Additional volumes on the output Deployment definition.
+volumes:
+  # config-volume is a configmap that contains files that are required by the IAG
+  # application and can be customized.
+  - name: "config-volume"
+    configMap:
+      name: "iag-config-map"
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts:
+  # Uses a configmap to mount a config file at the below path
+  - name: "config-volume"
+    mountPath: "/etc/automation-gateway/properties.yml"
+    subPath: "properties.yml"
+  # Uses a configmap to mount a customized ansible config file at the below path
+  - name: "config-volume"
+    mountPath: "/etc/ansible/ansible.cfg"
+    subPath: "ansible.cfg"
+  # Uses a persistent volume claim to mount a directory where the IAG sqlite database
+  # files and log files are stored. Must be unique per container
+  - name: "iag-data-volume"
+    mountPath: "/var/lib/automation-gateway"
+  # Uses a persistent volume claim to mount a directory where the IAG application will
+  # store any customer authored scripts and device inventory files.
+  - name: "iag-code-volume"
+    mountPath: "/usr/share/automation-gateway"
+
+nodeSelector:
+  itential.io/role: "iap-p"
+
+tolerations:
+- effect: "NoSchedule"
+  key: "itential.io/role"
+  operator: "Equal"
+  value: "iap-p"
+
+affinity: {}
