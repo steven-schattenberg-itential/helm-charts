@@ -1,23 +1,23 @@
+# Copyright (c) 2024, Itential, Inc
+# GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 # Default values for iap.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
 
 replicaCount: 3
-namespace: "default-pet"
+namespace: ""
 
-# image The Itential image to use, its version, and its location
+# The Itential image to use, its version, and its location
 image:
   repository: "itential.jfrog.io/itential-docker/automation-platform"
   name: "itential.jfrog.io/itential-docker/automation-platform"
-  tag: "2023.2.6"
+  tag: "2023.2.7"
   pullPolicy: "IfNotPresent"
 
-# imagePullSecrets The secrets object used to pull the image from the repo
+# The secrets object used to pull the image from the repo
 imagePullSecrets:
   - name: "jfrogcred"
 
-# storageClass This is used to configure the storage class object which governs
+# This is used to configure the storage class object which governs
 # how the mounted volumes are created.
 storageClass:
   enabled: true
@@ -32,43 +32,43 @@ storageClass:
 # application logs and for Itential adapters.
 persistentVolumeClaims:
   enabled: false
-  # assetClaim This represents the claim for the persistence for the adapters and other
+  # This represents the claim for the persistence for the adapters and other
   # custom applications that may have been developed by the customer.
   assetClaim:
-    # name The name of the persistent volume, must match the volumeMount name
+    # The name of the persistent volume, must match the volumeMount name
     name: "iap-assets-volume"
-    # storageClassName The name of the StorageClass object
+    # The name of the StorageClass object
     storageClassName: "iap-ebs-gp3"
-    # storage The requested amount of storage
+    # The requested amount of storage
     storage: "10Gi"
-    # accessModes The access mode used by the volume claim when mounting the volume
+    # The access mode used by the volume claim when mounting the volume
     accessModes:
       - "ReadWriteOnce"
-  # logClaim This represents the claim for the persistence for the log files created and
+  # This represents the claim for the persistence for the log files created and
   # written to by the IAP application
   logClaim:
-    # name The name of the persistent volume, must match the volumeMount name
+    # The name of the persistent volume, must match the volumeMount name
     name: "iap-logs-volume"
-    # storageClassName The name of the StorageClass object
+    # The name of the StorageClass object
     storageClassName: "iap-ebs-gp3"
-    # storage The requested amount of storage
+    # The requested amount of storage
     storage: "10Gi"
-    # accessModes The access mode used by the volume claim when mounting the volume
+    # The access mode used by the volume claim when mounting the volume
     accessModes:
       - "ReadWriteOnce"
 
-# service The Kubernetes service object for this application
+# The Kubernetes service object for this application
 service:
-  # type The service type
+  # The service type
   type: "ClusterIP"
-  # name The name of this Kubernetes service object
+  # The name of this Kubernetes service object
   name: "iap-service"
-  # port The port that this service object is listening on
+  # The port that this service object is listening on
   port: 80
-  # targetPort The application port that this service object will send requests to
+  # The application port that this service object will send requests to
   targetPort: 3000
 
-# ingress The Kubernetes ingress object for this application.
+# The Kubernetes ingress object for this application.
 ingress:
   # enabled The ingress object can be disabled and will not be created with this set to false
   enabled: true
@@ -105,14 +105,14 @@ podAnnotations: {}
 podLabels: {}
 securityContext: {}
 
-# podSecurityContext The pods will mount some persistent volumes. These settings
+# The pods will mount some persistent volumes. These settings
 # allow for that to happen.
 podSecurityContext:
   fsGroup: 1001
   runAsUser: 1001
   runAsNonRoot: true
 
-# resources Container resources
+# Container resources
 resources:
   limits:
     memory: "14Gi"
@@ -120,9 +120,10 @@ resources:
     cpu: "3"
     memory: "14Gi"
 
-# livenessProbe The liveness probe used in the deployment object
+# The liveness probe used to determine if the container is alive. If the liveness probe fails,
+# the kubelet kills the container, and the container is subjected to its restart policy. If a
+# container does not provide a liveness probe, the default state is Success.
 livenessProbe:
-  initialDelaySeconds: 180
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 3
@@ -131,9 +132,12 @@ livenessProbe:
     path: "/health/status"
     port: 3000
 
-# readinessProbe The readiness probe used in the deployment object
+# The readiness probe used to determine if the container is ready to accept requests. If the
+# readiness probe fails, the endpoints controller removes the pod’s IP address from the
+# endpoints of all services that match the pod. The default state of readiness before the
+# initial delay is failure. If a container does not provide a readiness probe, the default
+# state is success.
 readinessProbe:
-  initialDelaySeconds: 180
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 3
@@ -142,7 +146,18 @@ readinessProbe:
     path: "/health/status"
     port: 3000
 
-# Startup probe...
+# The startup probe used to allow some time for the application to start up. The application
+# will have a maximum of 3 minutes (18 * 10 = 180s) to finish its startup. Once the startup
+# probe has succeeded once, the liveness probe takes over.
+startupProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 18
+  successThreshold: 1
+  httpGet:
+    path: "/health/status"
+    port: 3000
 
 # Configuration properties for Itential properties.json file. This is the main
 # config file for the Itential application. This is used to populate a config map
@@ -150,15 +165,15 @@ readinessProbe:
 propertiesJson:
   profileId: "Local_AAA"
   dbAuth: false
-  dbUsername: "pet-default-iap"
-  dbPassword: "ktRvcqKKy8yvPqzn"
-  dbName: "pet-default-iap"
+  dbUsername: ""
+  dbPassword: ""
+  dbName: ""
   acceptInvalidCerts: true
   checkServerIdentity: false
   sslEnabled: true
   sslCA: ""
   sslValidate: false
-  dbUrl: "mongodb+srv://pet-default-iap:ktRvcqKKy8yvPqzn@iap-cloud-dev02-use2.ug7wh.mongodb.net/?retryWrites=true&w=majority&appName=iap-cloud-dev02-use2"
+  dbUrl: ""
   processJobsOnStart: true
   processTasksOnStart: true
 

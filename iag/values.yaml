@@ -1,16 +1,16 @@
+# Copyright (c) 2024, Itential, Inc
+# GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 # Default values for iag.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
 
 replicaCount: 3
-namespace: "default-pet"
+namespace: ""
 
 # image The Itential image to use, its version, and its location
 image:
   repository: "itential.jfrog.io/itential-docker/automation-gateway"
   name: "itential.jfrog.io/itential-docker/automation-gateway"
-  tag: "2023.2.9"
+  tag: "2023.3.4"
   pullPolicy: "IfNotPresent"
 
 # imagePullSecrets The secrets object used to pull the image from the repo
@@ -120,9 +120,10 @@ resources:
     cpu: "1000m"
     memory: "256Mi"
 
-# livenessProbe The liveness probe used in the deployment object
+# The liveness probe used to determine if the container is alive. If the liveness probe fails,
+# the kubelet kills the container, and the container is subjected to its restart policy. If a
+# container does not provide a liveness probe, the default state is Success.
 livenessProbe:
-  initialDelaySeconds: 120
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 3
@@ -131,12 +132,28 @@ livenessProbe:
     path: "/api/v2.0/poll"
     port: 8083
 
-# readinessProbe The readiness probe used in the deployment object
+# The readiness probe used to determine if the container is ready to accept requests. If the
+# readiness probe fails, the endpoints controller removes the pod’s IP address from the
+# endpoints of all services that match the pod. The default state of readiness before the
+# initial delay is failure. If a container does not provide a readiness probe, the default
+# state is success.
 readinessProbe:
-  initialDelaySeconds: 120
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 3
+  successThreshold: 1
+  httpGet:
+    path: "/api/v2.0/poll"
+    port: 8083
+
+# The startup probe used to allow some time for the application to start up. The application
+# will have a maximum of 3 minutes (18 * 10 = 180s) to finish its startup. Once the startup
+# probe has succeeded once, the liveness probe takes over.
+startupProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 18
   successThreshold: 1
   httpGet:
     path: "/api/v2.0/poll"
