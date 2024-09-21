@@ -7,7 +7,6 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name:  {{ include "iap.fullname" . }}
-  namespace: {{ .Values.namespace }}
   labels:
     {{- include "iap.labels" . | nindent 4 }}
 spec:
@@ -39,21 +38,48 @@ spec:
       - name: {{ .Chart.Name }}
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
           - name: http
             containerPort: {{ .Values.service.port }}
             protocol: TCP
+        {{- if .Values.startupProbe }}
+        startupProbe:
+          {{- toYaml .Values.startupProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.livenessProbe }}
+        livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.readinessProbe }}
+        readinessProbe:
+          {{- toYaml .Values.readinessProbe | nindent 10 }}
+        {{- end }}
         {{- if .Values.resources }}
         resources:  {{- toYaml .Values.resources | nindent 10 }}
         {{- end }}
-        {{- with .Values.volumeMounts }}
         volumeMounts:
+          # Uses the configmap to mount a config file at the below path
+          - name: "config-volume"
+            mountPath: "/opt/itential/automation-platform/config/custom-properties.json"
+            subPath: "custom-properties.json"
+          # Uses a persistent volume claim to mount a directory to write IAP log files to
+          - name: "iap-logs-volume"
+            mountPath: "/var/log/itential"
+          # Uses a persistent volume claim to mount a directory that includes adapters and apps
+          - name: "iap-assets-volume"
+            mountPath: "/opt/custom"
+        {{- with .Values.volumeMounts }}
           {{- toYaml . | nindent 10 }}
         {{- end }}
-      {{- with .Values.volumes }}
       volumes:
+        # config-volume is a configmap that contains files that are required by the IAG
+        # application and can be customized.
+        - name: "config-volume"
+          configMap:
+            name: "iap-config-map"
+      {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}
@@ -70,23 +96,21 @@ spec:
       {{- end }}
   volumeClaimTemplates:
     - metadata:
-        name: {{ .Values.persistentVolumeClaims.assetClaim.name }}
-        namespace: {{ .Values.namespace }}
+        name: "iap-assets-volume"
       spec:
         accessModes:
-          {{- toYaml .Values.persistentVolumeClaims.assetClaim.accessModes | nindent 10 }}
+          - "ReadWriteOnce"
         resources:
           requests:
             storage: {{ .Values.persistentVolumeClaims.assetClaim.storage }}
-        storageClassName: {{ .Values.persistentVolumeClaims.assetClaim.storageClassName }}
+        storageClassName: {{ .Values.storageClass.name }}
     - metadata:
-        name: {{ .Values.persistentVolumeClaims.logClaim.name }}
-        namespace: {{ .Values.namespace }}
+        name: "iap-logs-volume"
       spec:
         accessModes:
-          {{- toYaml .Values.persistentVolumeClaims.logClaim.accessModes | nindent 10 }}
+          - "ReadWriteOnce"
         resources:
           requests:
             storage: {{ .Values.persistentVolumeClaims.logClaim.storage }}
-        storageClassName: {{ .Values.persistentVolumeClaims.logClaim.storageClassName }}
+        storageClassName: {{ .Values.storageClass.name }}
 {{- end }}

@@ -4,7 +4,6 @@
 # Default values for iap.
 
 replicaCount: 3
-namespace: ""
 
 # The Itential image to use, its version, and its location
 image:
@@ -31,31 +30,16 @@ storageClass:
 # Persistent volumes and persitent volume claims. These are used for Itential
 # application logs and for Itential adapters.
 persistentVolumeClaims:
-  enabled: false
   # This represents the claim for the persistence for the adapters and other
   # custom applications that may have been developed by the customer.
   assetClaim:
-    # The name of the persistent volume, must match the volumeMount name
-    name: "iap-assets-volume"
-    # The name of the StorageClass object
-    storageClassName: "iap-ebs-gp3"
     # The requested amount of storage
     storage: "10Gi"
-    # The access mode used by the volume claim when mounting the volume
-    accessModes:
-      - "ReadWriteOnce"
   # This represents the claim for the persistence for the log files created and
   # written to by the IAP application
   logClaim:
-    # The name of the persistent volume, must match the volumeMount name
-    name: "iap-logs-volume"
-    # The name of the StorageClass object
-    storageClassName: "iap-ebs-gp3"
     # The requested amount of storage
     storage: "10Gi"
-    # The access mode used by the volume claim when mounting the volume
-    accessModes:
-      - "ReadWriteOnce"
 
 # The Kubernetes service object for this application
 service:
@@ -93,10 +77,6 @@ ingress:
         - path: "/"
           pathType: "Prefix"
   tls: []
-
-# Deployment is not supported and will be removed
-deployment:
-  enabled: false
 
 statefulset:
   enabled: true
@@ -162,41 +142,28 @@ startupProbe:
 # Configuration properties for Itential properties.json file. This is the main
 # config file for the Itential application. This is used to populate a config map
 # object which is then mounted as a file/volume.
-propertiesJson:
-  profileId: "Local_AAA"
-  dbAuth: false
-  dbUsername: ""
-  dbPassword: ""
-  dbName: ""
-  acceptInvalidCerts: true
-  checkServerIdentity: false
-  sslEnabled: true
-  sslCA: ""
-  sslValidate: false
-  dbUrl: ""
-  processJobsOnStart: true
-  processTasksOnStart: true
+configMap:
+  enabled: true
+  propertiesJson:
+    profileId: "Local_AAA"
+    dbAuth: false
+    dbUsername: ""
+    dbPassword: ""
+    dbName: ""
+    acceptInvalidCerts: true
+    checkServerIdentity: false
+    sslEnabled: true
+    sslCA: ""
+    sslValidate: false
+    dbUrl: ""
+    processJobsOnStart: true
+    processTasksOnStart: true
 
-# Additional volumes on the output Deployment definition.
-volumes:
-  # config-volume is a configmap that contains files that are required by the IAG
-  # application and can be customized.
-  - name: "config-volume"
-    configMap:
-      name: "iap-config-map"
+# Additional volumes to output on the Statefulset definition.
+volumes: []
 
-# Additional volumeMounts on the output Deployment definition.
-volumeMounts:
-  # Uses the configmap to mount a config file at the below path
-  - name: "config-volume"
-    mountPath: "/opt/itential/automation-platform/config/custom-properties.json"
-    subPath: "custom-properties.json"
-  # Uses a persistent volume claim to mount a directory to write IAP log files to
-  - name: "iap-logs-volume"
-    mountPath: "/var/log/itential"
-  # Uses a persistent volume claim to mount a directory that includes adapters and apps
-  - name: "iap-assets-volume"
-    mountPath: "/opt/custom"
+# Additional volumeMounts to output on the Statefulset definition.
+volumeMounts: []
 
 nodeSelector:
   itential.io/role: "iap-p"

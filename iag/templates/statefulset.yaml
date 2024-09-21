@@ -7,7 +7,6 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name:  {{ include "iag.fullname" . }}
-  namespace: {{ .Values.namespace }}
   labels:
     {{- include "iag.labels" . | nindent 4 }}
 spec:
@@ -45,15 +44,48 @@ spec:
           - name: http
             containerPort: {{ .Values.service.port }}
             protocol: TCP
+        {{- if .Values.startupProbe }}
+        startupProbe:
+          {{- toYaml .Values.startupProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.livenessProbe }}
+        livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.readinessProbe }}
+        readinessProbe:
+          {{- toYaml .Values.readinessProbe | nindent 10 }}
+        {{- end }}
         {{- if .Values.resources }}
         resources:  {{- toYaml .Values.resources | nindent 10 }}
         {{- end }}
-        {{- with .Values.volumeMounts }}
         volumeMounts:
+          # Uses a configmap to mount a config file at the below path
+          - name: "config-volume"
+            mountPath: "/etc/automation-gateway/properties.yml"
+            subPath: "properties.yml"
+          # Uses a configmap to mount a customized ansible config file at the below path
+          - name: "config-volume"
+            mountPath: "/etc/ansible/ansible.cfg"
+            subPath: "ansible.cfg"
+          # Uses a persistent volume claim to mount a directory where the IAG sqlite database
+          # files and log files are stored. Must be unique per container
+          - name: "iag-data-volume"
+            mountPath: "/var/lib/automation-gateway"
+          # Uses a persistent volume claim to mount a directory where the IAG application will
+          # store any customer authored scripts and device inventory files.
+          - name: "iag-code-volume"
+            mountPath: "/usr/share/automation-gateway"
+        {{- with .Values.volumeMounts }}
           {{- toYaml . | nindent 10 }}
         {{- end }}
-      {{- with .Values.volumes }}
       volumes:
+        # config-volume is a configmap that contains files that are required by the IAG
+        # application and can be customized.
+        - name: "config-volume"
+          configMap:
+            name: "iag-config-map"
+      {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}
@@ -70,23 +102,21 @@ spec:
       {{- end }}
   volumeClaimTemplates:
     - metadata:
-        name: {{ .Values.persistentVolumeClaims.dataClaim.name }}
-        namespace: {{ .Values.namespace }}
+        name: "iag-data-volume"
       spec:
         accessModes:
-          {{- toYaml .Values.persistentVolumeClaims.dataClaim.accessModes | nindent 10 }}
+          - "ReadWriteOnce"
         resources:
           requests:
             storage: {{ .Values.persistentVolumeClaims.dataClaim.storage }}
-        storageClassName: {{ .Values.persistentVolumeClaims.dataClaim.storageClassName }}
+        storageClassName: {{ .Values.storageClass.name }}
     - metadata:
-        name: {{ .Values.persistentVolumeClaims.codeClaim.name }}
-        namespace: {{ .Values.namespace }}
+        name: "iag-code-volume"
       spec:
         accessModes:
-          {{- toYaml .Values.persistentVolumeClaims.codeClaim.accessModes | nindent 10 }}
+          - "ReadWriteOnce"
         resources:
           requests:
             storage: {{ .Values.persistentVolumeClaims.codeClaim.storage }}
-        storageClassName: {{ .Values.persistentVolumeClaims.codeClaim.storageClassName }}
+        storageClassName: {{ .Values.storageClass.name }}
 {{- end }}
