@@ -19,6 +19,20 @@ This will install IAP with the "2023.2.7" image.
 `helm install iap ./iap --sete propertiesJson.dbUrl="mongodb+srv://<some-username>:<some-password>@<some-mongo-url>"`
 This will install IAP using the mongo connection string provided.
 
+### How to construct the iap-asset-volume
+This volume is intended to store the applications and adapters. Its contents will reflect a customer's unique usage of IAP and contain all of the adapters and custom applications required. There is an expectation in the container of the structure of the files in this volume. It should look like this:
+```.
+└── .node_modules/
+    ├── @itentialopensource/
+    │   ├── opensource-adapter1
+    │   └── opensource-adapter2
+    ├── @itential/
+    │   └── app-artifacts
+    └── @customer-namespace/
+        ├── custom-adapter1
+        └── custom-adapter2
+```
+This will be correctly translated inside the container to the appropriate directories for IAP to understand.
 ## Itential Automation Gateway (IAG)
 The application is installed using a Kubernetes statefulset. It also includes persistent volume claims, ingress, and other Kubernetes objects suitable to run the application.
 
