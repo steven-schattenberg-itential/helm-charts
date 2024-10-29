@@ -1,7 +1,7 @@
 # Helm charts for Itential Automation Platform and Itential Automation Gateway
 This repo contains helm charts for running Itential Automation Platform and Itential Automation Gateway in Kubernetes. This repo contains two charts: iap and iag.
 
-## IAP
+## Itential Automation Platform (IAP)
 The chart will not install any dependencies of the IAP application. The chart assumes that those are running, configured, and bootstrapped with all necessary data. The application is installed using a Kubernetes statefulset. It also includes persistent volume claims, ingress, and other Kubernetes objects suitable to run the application.
 
 ### Volumes
@@ -16,6 +16,8 @@ The chart will not install any dependencies of the IAP application. The chart as
 This will install IAP according to how its configured in the values.yaml file ("latest").
 `helm install iap ./iap --set image.tag=2023.2.7`
 This will install IAP with the "2023.2.7" image.
+`helm install iap ./iap --sete propertiesJson.dbUrl="mongodb+srv://<some-username>:<some-password>@<some-mongo-url>"`
+This will install IAP using the mongo connection string provided.
 
 ### How to construct the iap-asset-volume
 This volume is intended to store the applications and adapters. Its contents will reflect a customer's unique usage of IAP and contain all of the adapters and custom applications required. There is an expectation in the container of the structure of the files in this volume. It should look like this:
@@ -31,7 +33,7 @@ This volume is intended to store the applications and adapters. Its contents wil
         └── custom-adapter2
 ```
 This will be correctly translated inside the container to the appropriate directories for IAP to understand.
-## IAG
+## Itential Automation Gateway (IAG)
 The application is installed using a Kubernetes statefulset. It also includes persistent volume claims, ingress, and other Kubernetes objects suitable to run the application.
 
 ### Volumes
