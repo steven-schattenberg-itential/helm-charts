@@ -92,8 +92,8 @@ spec:
             name: "iag-config-map"
         {{- if .Files.Glob "files/certificates/*.*" }}
         - name: "config-certs"
-          configMap:
-            name: "iag-certificates"
+          secret:
+            secretName: "iag-certificates"
         {{- end }}
       {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
