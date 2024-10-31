@@ -1,0 +1,7 @@
+# Ignore everything in this directory
+*
+# Except this file
+!.gitignore
+# This directory is intended to be empty unless a user of these charts needs to add
+# TLS/SSL certificates to their container. For that to happen, the certificates must
+# be added to this directory and the chart will add them to the container.
