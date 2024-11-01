@@ -64,6 +64,11 @@ spec:
           - name: "config-volume"
             mountPath: "/etc/automation-gateway/properties.yml"
             subPath: "properties.yml"
+          {{- range $path, $_ := .Files.Glob "files/certificates/*.*" }}
+          - name: "config-certs"
+            mountPath: "/etc/ssl/certs/{{ base ($path) }}"
+            subPath: {{ base ($path) }}
+          {{- end }}
           # Uses a configmap to mount a customized ansible config file at the below path
           - name: "config-volume"
             mountPath: "/etc/ansible/ansible.cfg"
@@ -85,6 +90,11 @@ spec:
         - name: "config-volume"
           configMap:
             name: "iag-config-map"
+        {{- if .Files.Glob "files/certificates/*.*" }}
+        - name: "config-certs"
+          secret:
+            secretName: "iag-certificates"
+        {{- end }}
       {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}

@@ -33,6 +33,10 @@ This volume is intended to store the applications and adapters. Its contents wil
         └── custom-adapter2
 ```
 This will be correctly translated inside the container to the appropriate directories for IAP to understand.
+
+### How to add TLS/SSL certificates to the container
+To add additional TLS or SSL certificates to the container created by Kubernetes, add any certificates to the `files/certificates` directory in either the IAP or IAG projects. Any certificates that are placed in that directory will be added to the container at `/etc/ssl/certs`.
+
 ## Itential Automation Gateway (IAG)
 The application is installed using a Kubernetes statefulset. It also includes persistent volume claims, ingress, and other Kubernetes objects suitable to run the application.
 
@@ -48,3 +52,24 @@ The application is installed using a Kubernetes statefulset. It also includes pe
 This will install IAG according to how its configured in the values.yaml file ("latest").
 `helm install iag ./iag --set image.tag=2023.2.7`
 This will install IAG with the "2023.2.7" image.
+
+### How to construct the iag-code-volume
+This volume is intended to store any custom assets that the user is bringing to IAG. Its contents will reflect a customer's unique usage of IAG. There is an expectation in the container of the structure of the files in this volume. It should look like this:
+```
+.
+├── ansible/ # custom ansible assets
+│   ├── collections
+│   ├── inventory
+│   ├── modules
+│   ├── playbooks
+│   └── roles
+├── venv/ # custom python virtual environments
+├── nornir/
+│   ├── conf
+│   ├── inventory
+│   └── modules
+└── scripts/ # custom script assets
+```
+
+### How to add TLS/SSL certificates to the container
+To add additional TLS or SSL certificates to the container created by Kubernetes, add any certificates to the `files/certificates` directory in either the IAP or IAG projects. Any certificates that are placed in that directory will be added to the container at `/etc/ssl/certs`.
