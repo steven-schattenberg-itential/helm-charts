@@ -21,8 +21,9 @@ This will install IAP using the mongo connection string provided.
 
 ### How to construct the iap-asset-volume
 This volume is intended to store the applications and adapters. Its contents will reflect a customer's unique usage of IAP and contain all of the adapters and custom applications required. There is an expectation in the container of the structure of the files in this volume. It should look like this:
-```.
-└── .node_modules/
+```
+.
+└── node_modules/
     ├── @itentialopensource/
     │   ├── opensource-adapter1
     │   └── opensource-adapter2
