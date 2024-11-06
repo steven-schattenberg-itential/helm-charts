@@ -1,3 +1,4 @@
+{{- if .Values.configMap.enabled -}}
 # Copyright (c) 2024, Itential, Inc
 # GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 # Source: iap/templates/configmap.yaml
@@ -6,35 +7,33 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: iap-config-map
-  namespace: {{ .Values.namespace }}
 data:
   custom-properties.json: |
     {
-      "id": "{{ .Values.propertiesJson.profileId }}",
+      "id": "{{ .Values.configMap.propertiesJson.profileId }}",
       "mongoProps": {
         "credentials": {
-          "dbAuth": {{ .Values.propertiesJson.dbAuth }},
-          "passwd": "{{ .Values.propertiesJson.dbPassword }}",
-          "user": "{{ .Values.propertiesJson.dbUsername }}"
+          "dbAuth": {{ .Values.configMap.propertiesJson.dbAuth }},
+          "passwd": "{{ .Values.configMap.propertiesJson.dbPassword }}",
+          "user": "{{ .Values.configMap.propertiesJson.dbUsername }}"
         },
-        "db": "{{ .Values.propertiesJson.dbName }}",
+        "db": "{{ .Values.configMap.propertiesJson.dbName }}",
         "ssl": {
-          "acceptInvalidCerts": {{ .Values.propertiesJson.acceptInvalidCerts }},
-          "checkServerIdentity": {{ .Values.propertiesJson.checkServerIdentity }},
-          "enabled": {{ .Values.propertiesJson.sslEnabled }},
-          "sslCA": "{{ .Values.propertiesJson.sslCA }}",
-          "sslValidate": {{ .Values.propertiesJson.sslValidate }}
+          "acceptInvalidCerts": {{ .Values.configMap.propertiesJson.acceptInvalidCerts }},
+          "checkServerIdentity": {{ .Values.configMap.propertiesJson.checkServerIdentity }},
+          "enabled": {{ .Values.configMap.propertiesJson.sslEnabled }},
+          "sslCA": "{{ .Values.configMap.propertiesJson.sslCA }}",
+          "sslValidate": {{ .Values.configMap.propertiesJson.sslValidate }}
         },
-        "url": "{{ .Values.propertiesJson.dbUrl }}"
+        "url": "{{ .Values.configMap.propertiesJson.dbUrl }}"
       },
       "pathProps": {
         "description": "File Path Variables",
         "encrypted": true,
         "sdk_dir": "/opt/pronghorn-applications"
       },
-      "processJobsOnStart": {{ .Values.propertiesJson.processJobsOnStart }},
-      "processTasksOnStart": {{ .Values.propertiesJson.processTasksOnStart }},
-      "serverId": "{{ uuidv4 }}",
-      "serverName": "",
+      "processJobsOnStart": {{ .Values.configMap.propertiesJson.processJobsOnStart }},
+      "processTasksOnStart": {{ .Values.configMap.propertiesJson.processTasksOnStart }},
       "vaultProps": null
     }
+{{- end -}}

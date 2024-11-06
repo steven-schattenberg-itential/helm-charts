@@ -4,7 +4,6 @@
 # Default values for iag.
 
 replicaCount: 3
-namespace: ""
 
 # image The Itential image to use, its version, and its location
 image:
@@ -31,31 +30,16 @@ storageClass:
 # persistentVolumeClaims These are used for Itential Automation Gateway persistence
 # and for any customer specific assets (ansible or python scripts).
 persistentVolumeClaims:
-  enabled: true
   # dataClaim This represents the claim for the persistence for the sqlite data
   # required by IAG.
   dataClaim:
-    # name The name of the persistent volume, must match the volumeMount name
-    name: "iag-data-volume"
-    # storageClassName The name of the StorageClass object
-    storageClassName: "iag-ebs-gp3"
     # storage The requested amount of storage
     storage: "10Gi"
-    # accessModes The access mode used by the volume claim when mounting the volume
-    accessModes:
-      - "ReadWriteOnce"
   # codeClaim This represents the claim for the location of all the customer authored
   # scripts, ansible code, and other customizations.
   codeClaim:
-    # name The name of the persistent volume, must match the volumeMount name
-    name: "iag-code-volume"
-    # storageClassName The name of the StorageClass object
-    storageClassName: "iag-ebs-gp3"
     # storage The requested amount of storage
     storage: "10Gi"
-    # accessModes The access mode used by the volume claim when mounting the volume
-    accessModes:
-      - "ReadWriteOnce"
 
 # service The Kubernetes service object for this application
 service:
@@ -93,10 +77,6 @@ ingress:
         - path: "/"
           pathType: "Prefix"
   tls: []
-
-# Deployment is not supported and will be removed
-deployment:
-  enabled: false
 
 statefulset:
   enabled: true
@@ -162,50 +142,31 @@ startupProbe:
 # propertiesYaml This is used to generate the IAG config file that the IAG
 # application will use. These properties are all passed into the configmap
 # which is then mounted as a file and read by the application.
-propertiesYaml:
-  port: 8083
-  bindAddress: "0.0.0.0"
-  serverThreads: 8
-  logDir: "/var/lib/automation-gateway"
-  dataDir: "/var/lib/automation-gateway"
-  enableAnsible: true
-  ansibleDebug: false
-  customDir: "/usr/share/automation-gateway"
-  enableHttp: false
-  enableNetconf: true
-  enableNetmiko: false
-  enableNornir: false
-  enableScripts: true
-  enablePythonVenvs: true
-  enableGrpc: false
-  enableGit: true
+configMap:
+  enabled: true
+  propertiesYaml:
+    port: 8083
+    bindAddress: "0.0.0.0"
+    serverThreads: 8
+    logDir: "/var/lib/automation-gateway"
+    dataDir: "/var/lib/automation-gateway"
+    enableAnsible: true
+    ansibleDebug: false
+    customDir: "/usr/share/automation-gateway"
+    enableHttp: false
+    enableNetconf: true
+    enableNetmiko: false
+    enableNornir: false
+    enableScripts: true
+    enablePythonVenvs: true
+    enableGrpc: false
+    enableGit: true
 
 # volumes Additional volumes on the output Deployment definition.
-volumes:
-  # config-volume is a configmap that contains files that are required by the IAG
-  # application and can be customized.
-  - name: "config-volume"
-    configMap:
-      name: "iag-config-map"
+volumes: []
 
 # Additional volumeMounts on the output Deployment definition.
-volumeMounts:
-  # Uses a configmap to mount a config file at the below path
-  - name: "config-volume"
-    mountPath: "/etc/automation-gateway/properties.yml"
-    subPath: "properties.yml"
-  # Uses a configmap to mount a customized ansible config file at the below path
-  - name: "config-volume"
-    mountPath: "/etc/ansible/ansible.cfg"
-    subPath: "ansible.cfg"
-  # Uses a persistent volume claim to mount a directory where the IAG sqlite database
-  # files and log files are stored. Must be unique per container
-  - name: "iag-data-volume"
-    mountPath: "/var/lib/automation-gateway"
-  # Uses a persistent volume claim to mount a directory where the IAG application will
-  # store any customer authored scripts and device inventory files.
-  - name: "iag-code-volume"
-    mountPath: "/usr/share/automation-gateway"
+volumeMounts: []
 
 nodeSelector:
   itential.io/role: "iap-p"
