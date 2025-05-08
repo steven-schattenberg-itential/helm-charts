@@ -1,0 +1,171 @@
+# Default values for iag5.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# replicaCount: 1
+
+# image The Itential image to use, its version, and its location
+image:
+  repository: "itential.jfrog.io/gateway5-image/gateway5"
+  name: "itential.jfrog.io/gateway5-image/gateway5"
+  tag: "5.1.0-dev1-amd64"
+  pullPolicy: "IfNotPresent"
+
+# imagePullSecrets The secrets object used to pull the image from the repo
+imagePullSecrets:
+  - name: "jfrogcred"
+
+# nameOverride: ""
+# fullnameOverride: ""
+
+# serviceAccount:
+#   # Specifies whether a service account should be created
+#   create: true
+#   # Automatically mount a ServiceAccount's API credentials?
+#   automount: true
+#   # Annotations to add to the service account
+#   annotations: {}
+#   # The name of the service account to use.
+#   # If not set and create is true, a name is generated using the fullname template
+#   name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# service:
+#   type: ClusterIP
+#   port: 80
+# service The Kubernetes service object for this application
+service:
+  # type The service type
+  type: "LoadBalancer"
+  # name The name of this Kubernetes service object
+  name: "iag5-service"
+  # port The port that this service object is listening on
+  port: 50051
+  # targetPort The application port that this service object will send requests to
+  targetPort: 50051
+  # annotations on the service object, passed through as is
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/aws-load-balancer-internal: "false"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+    external-dns.alpha.kubernetes.io/hostname: iag5.pet-sbx.itential.io
+    external-dns.alpha.kubernetes.io/ttl: "60"
+
+# ingress The Kubernetes ingress object for this application.
+ingress:
+  # enabled The ingress object can be disabled and will not be created with this set to false
+  enabled: false
+  # name The name of this Kubernetes ingress object
+  name: "iag5-ingress"
+  # className The ingress controller class name
+  className: "nginx"
+  hostname: "iag5.pet-sbx.itential.io"
+  annotations:
+    # cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    external-dns.alpha.kubernetes.io/hostname: iag5.pet-sbx.itential.io
+    external-dns.alpha.kubernetes.io/ttl: "60"
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  tls: []
+
+# certificate:
+#   enabled: true
+#   selfsigned: true
+#   issuerRef:
+#     name: letsencrypt-staging
+#     kind: ClusterIssuer
+#   renewBefore: 48h
+#   duration: 2160h
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# livenessProbe:
+#   httpGet:
+#     path: /
+#     port: http
+# readinessProbe:
+#   httpGet:
+#     path: /
+#     port: http
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+runnerMode:
+  replicaCount: 0
+  env:
+    - name: GATEWAY_RUNNER_USE_TLS
+      value: "false"
+    - name: GATEWAY_RUNNER_LISTEN_ADDRESS
+      value: "0.0.0.0"
+serverMode:
+  replicaCount: 1
+  env:
+    - name: GATEWAY_SERVER_DISTRIBUTED_EXECUTION
+      value: "false"
+    - name: GATEWAY_SERVER_CERTIFICATE_FILE
+      value: /etc/ssl/gateway/server.crt
+    - name: GATEWAY_SERVER_PRIVATE_KEY_FILE
+      value: /etc/ssl/gateway/server.key
+    - name: GATEWAY_SERVER_LISTEN_ADDRESS
+      value: "0.0.0.0"
+    - name: GATEWAY_SERVER_USE_TLS
+      value: "true"
+allMode:
+  env:
+    - name: GATEWAY_APPLICATION_CA_CERTIFICATE_FILE
+      value: /etc/ssl/gateway/ca.crt
+    - name: GATEWAY_COMMANDER_ENABLED
+      value: "false"
+    - name: GATEWAY_STORE_BACKEND
+      value: "memory"
+    - name: GATEWAY_STORE_ETCD_HOSTS
+      value: "etcd.default.svc.cluster.local:2379"
+    - name: GATEWAY_STORE_ETCD_USE_TLS
+      value: "false"
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
