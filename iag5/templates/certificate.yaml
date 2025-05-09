@@ -1,0 +1,19 @@
+{{- if .Values.certificate.enabled -}}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "iag5.fullname" . }}-tls
+  labels:
+    {{- include "iag5.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "iag5.fullname" . }}-tls-secret
+  issuerRef:
+    name: {{ .Values.certificate.issuerRef.name }}
+    kind: {{ .Values.certificate.issuerRef.kind }}
+  commonName: {{ .Values.certificate.hostname }}
+  dnsNames:
+    - {{ .Values.ingress.hostname }}
+  renewBefore: {{ .Values.certificate.renewBefore }}
+  duration: {{ .Values.certificate.duration }}
+{{- end -}}

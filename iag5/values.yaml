@@ -81,14 +81,20 @@ ingress:
     # nginx.ingress.kubernetes.io/ssl-redirect: "true"
   tls: []
 
-# certificate:
-#   enabled: true
-#   selfsigned: true
-#   issuerRef:
-#     name: letsencrypt-staging
-#     kind: ClusterIssuer
-#   renewBefore: 48h
-#   duration: 2160h
+issuer:
+  enabled: true
+  name: iag5-ca-issuer
+  caSecretName: iag5-ca
+
+certificate:
+  enabled: true
+  # selfsigned: true
+  issuerRef:
+    name: iag5-ca-issuer
+    kind: Issuer
+  renewBefore: 48h
+  duration: 2160h
+  hostname: iag5.pet-sbx.itential.io
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -121,19 +127,23 @@ autoscaling:
 runnerMode:
   replicaCount: 0
   env:
-    - name: GATEWAY_RUNNER_USE_TLS
-      value: "false"
+    - name: GATEWAY_RUNNER_CERTIFICATE_FILE
+      value:
+    - name: GATEWAY_RUNNER_PRIVATE_KEY_FILE
+      value:
     - name: GATEWAY_RUNNER_LISTEN_ADDRESS
       value: "0.0.0.0"
+    - name: GATEWAY_RUNNER_USE_TLS
+      value: "false"
 serverMode:
   replicaCount: 1
   env:
     - name: GATEWAY_SERVER_DISTRIBUTED_EXECUTION
       value: "false"
     - name: GATEWAY_SERVER_CERTIFICATE_FILE
-      value: /etc/ssl/gateway/server.crt
+      value: /etc/ssl/gateway/tls.crt
     - name: GATEWAY_SERVER_PRIVATE_KEY_FILE
-      value: /etc/ssl/gateway/server.key
+      value: /etc/ssl/gateway/tls.key
     - name: GATEWAY_SERVER_LISTEN_ADDRESS
       value: "0.0.0.0"
     - name: GATEWAY_SERVER_USE_TLS

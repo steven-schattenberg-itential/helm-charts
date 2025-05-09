@@ -16,7 +16,6 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      #targetPort: {{ include "iag5.fullname" . }}-server
       targetPort: {{ .Values.service.targetPort }}
       protocol: TCP
       name: iag5-service-port

@@ -1,0 +1,35 @@
+# Helm chart packages
+*.tgz
+*.tar.gz
+*.json
+
+# Helm subchart dependencies (if using helm dependency update)
+charts/
+
+# Template output (e.g., if using helm template)
+rendered-manifests/
+output/
+
+# Helm configuration and cache
+.helm/
+
+# Local values override files (example)
+values.dev.yaml
+values.staging.yaml
+values.local.yaml
+
+# Kubernetes secrets or sensitive values (by convention)
+secrets.yaml
+*.secrets.yaml
+
+# Editor/IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+files/
