@@ -21,3 +21,5 @@ spec:
       name: iag5-service-port
   selector:
     {{- include "iag5.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+

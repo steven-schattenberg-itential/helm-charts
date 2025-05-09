@@ -5,7 +5,6 @@ metadata:
   name: {{ include "iag5.fullname" . }}-server
   labels:
     {{- include "iag5.labels" . | nindent 4 }}
-    app.kubernetes.io/component: server
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{.Values.serverMode.replicaCount }}
@@ -20,6 +19,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
+        app.kubernetes.io/component: server
         {{- include "iag5.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
