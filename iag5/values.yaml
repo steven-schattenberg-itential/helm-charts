@@ -125,7 +125,7 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 runnerMode:
-  replicaCount: 0
+  replicaCount: 3
   env:
     - name: GATEWAY_RUNNER_CERTIFICATE_FILE
       value:
@@ -139,7 +139,7 @@ serverMode:
   replicaCount: 1
   env:
     - name: GATEWAY_SERVER_DISTRIBUTED_EXECUTION
-      value: "false"
+      value: "true"
     - name: GATEWAY_SERVER_CERTIFICATE_FILE
       value: /etc/ssl/gateway/tls.crt
     - name: GATEWAY_SERVER_PRIVATE_KEY_FILE
@@ -147,7 +147,7 @@ serverMode:
     - name: GATEWAY_SERVER_LISTEN_ADDRESS
       value: "0.0.0.0"
     - name: GATEWAY_SERVER_USE_TLS
-      value: "true"
+      value: "false"
 allMode:
   env:
     - name: GATEWAY_APPLICATION_CA_CERTIFICATE_FILE
@@ -155,7 +155,7 @@ allMode:
     - name: GATEWAY_COMMANDER_ENABLED
       value: "false"
     - name: GATEWAY_STORE_BACKEND
-      value: "memory"
+      value: "etcd"
     - name: GATEWAY_STORE_ETCD_HOSTS
       value: "etcd.default.svc.cluster.local:2379"
     - name: GATEWAY_STORE_ETCD_USE_TLS

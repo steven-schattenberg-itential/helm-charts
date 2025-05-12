@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Itential, Inc
+# Copyright (c) 2025, Itential, Inc
 # GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 # Source: iag5/templates/service.yaml
 ---
@@ -22,4 +22,3 @@ spec:
   selector:
     {{- include "iag5.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: server
-
