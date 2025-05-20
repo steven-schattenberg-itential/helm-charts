@@ -63,12 +63,28 @@ spec:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
           volumeMounts:
+            - name: cert-volume
+              mountPath: /etc/ssl/gateway
+              readOnly: true
+          {{- if .Values.allMode.GATEWAY_STORE_ETCD_USE_TLS }}
+            - name: etcd-cert-volume
+              mountPath: /etc/ssl/etcd
+              readOnly: true
+          {{- end -}}
+          {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- with .Values.volumes }}
       volumes:
+        - name: cert-volume
+          secret:
+            secretName: {{ include "iag5.fullname" . }}-tls-secret
+      {{- if .Values.allMode.GATEWAY_STORE_ETCD_USE_TLS }}
+        - name: etcd-cert-volume
+          secret:
+            secretName: {{ .Values.allMode.etcdTlsSecretName }}
+      {{- end -}}
+      {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}

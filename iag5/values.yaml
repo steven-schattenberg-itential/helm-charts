@@ -128,13 +128,13 @@ runnerMode:
   replicaCount: 3
   env:
     - name: GATEWAY_RUNNER_CERTIFICATE_FILE
-      value:
+      value: /etc/ssl/gateway/tls.crt
     - name: GATEWAY_RUNNER_PRIVATE_KEY_FILE
-      value:
+      value: /etc/ssl/gateway/tls.key
     - name: GATEWAY_RUNNER_LISTEN_ADDRESS
       value: "0.0.0.0"
     - name: GATEWAY_RUNNER_USE_TLS
-      value: "false"
+      value: "true"
 serverMode:
   replicaCount: 1
   env:
@@ -147,9 +147,13 @@ serverMode:
     - name: GATEWAY_SERVER_LISTEN_ADDRESS
       value: "0.0.0.0"
     - name: GATEWAY_SERVER_USE_TLS
-      value: "false"
+      value: "true"
 allMode:
+  etcdTlsSecretName: etcd-tls-secret
+  GATEWAY_STORE_ETCD_USE_TLS: true
   env:
+    - name: GATEWAY_LOG_LEVEL
+      value: DEBUG
     - name: GATEWAY_APPLICATION_CA_CERTIFICATE_FILE
       value: /etc/ssl/gateway/ca.crt
     - name: GATEWAY_COMMANDER_ENABLED
@@ -159,7 +163,15 @@ allMode:
     - name: GATEWAY_STORE_ETCD_HOSTS
       value: "etcd.default.svc.cluster.local:2379"
     - name: GATEWAY_STORE_ETCD_USE_TLS
-      value: "false"
+      value: "true"
+    - name: GATEWAY_STORE_ETCD_CA_CERTIFICATE_FILE
+      value: /etc/ssl/etcd/ca.crt
+    - name: GATEWAY_STORE_ETCD_CERTIFICATE_FILE
+      value: /etc/ssl/etcd/tls-client.crt
+    - name: GATEWAY_STORE_ETCD_CLIENT_CERT_AUTH
+      value: "true"
+    - name: GATEWAY_STORE_ETCD_PRIVATE_KEY_FILE
+      value: /etc/ssl/etcd/tls-client.key
 
 # Additional volumes on the output Deployment definition.
 volumes: []
