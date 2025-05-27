@@ -14,98 +14,110 @@ client is not a part of the chart.
 
 For information about installing a client please visit the IAG5 repo.
 
-### Simple Server
-An IAG5 simple server is a simple All-in-one architecture that can run automations that are invoked from a
-client. That client could be a local installation of IAG5, a Torero install, or an Itential Platform
-server. It runs all automations in memory and runs on a single pod. It can support TLS connections.
+### Requirements & Dependencies
 
-To create this environment the values file must provide the appropriate values for `serverMode` and
-`runnerMode`. When the number of servers is greater than zero the chart will create a pod as a
-server. When the number of runners is greater than zero the chart will create pods as runners. The
-values in `allMode` effect all pods. These configuration sections in values.yaml file can also
-contain all of the environment variables for a pod. For example, this will create a simple server:
+The chart will require a Certificate Authority to be added to the Kubernetes environment. This is
+used by the chart when running with TLS flags enabled. The chart will use this CA to generate the
+necessary certificates using a Kubernetes `Issuer` which is included. The Issuer will issue the
+certificates using the CA. The certificates are then included using a Kubernetes `Secret` which is
+mounted by the pods. Creating and adding this CA is outside of the scope of this chart.
+
+Both the `Issuer` and the `Certificate` objects are realized by using the widely used Kubernetes
+add-on called `cert-manager`. Cert-manager is responsible for making the TLS certificates required
+by using the CA that was installed separately. The installation of cert-manager is outside the scope
+of this chart. To check if this is already installed run this command:
+
+```bash
+kubectl get crds | grep cert-manager
+```
+
+### Simple Server
+
+An IAG5 simple server is a simple All-in-one architecture that can run automations that are invoked
+from a client. That client could be a local installation of IAG5, or an Itential Platform server. It
+runs all automations in isolated execution environments and runs on a single pod runs all
+automations in memory and runs on a single pod. It can support TLS connections.
+
+To create this environment the values file must provide the appropriate values for `serverSettings`
+and `runnerSettings`. When the replicaCount is greater than zero in the `serverSettings` config
+object the chart will create a pod as a server. When the number of runners is greater than zero the
+chart will create pods as runners. The values in `applicationSettings` effect all pods. These
+configuration sections in values.yaml file can also contain all of the environment variables for a
+pod. For example, this will create a simple server:
 
 ```yaml
 # Set the number of runner replicas to zero
-runnerMode:
+runnerSettings:
   replicaCount: 0
   env:
     ...
 
 # Set the number of server replicas to one
-serverMode:
+serverSettings:
   replicaCount: 1
   env:
-    - name: GATEWAY_SERVER_DISTRIBUTED_EXECUTION
-      value: "false"
+    GATEWAY_SERVER_DISTRIBUTED_EXECUTION: false
     ...
 
 # Configure all pods with these values
-allMode:
+applicationSettings:
   env:
-    - name: GATEWAY_COMMANDER_ENABLED
-      value: "false"
-    - name: GATEWAY_STORE_BACKEND
-      value: "memory"
+    GATEWAY_COMMANDER_ENABLED: false
+    GATEWAY_STORE_BACKEND: "memory"
 ```
 
 ### Distributed Server
+
 An IAG5 distributed server is a server with a configurable number of runners. The server instructs
 the runners to run IAG5 services, the runners obey. The server responds to a client, like the simple
-server architecture. That client could be a local installation of IAG5, a Torero install, or an
-Itential Platform server. It requires an Etcd cluster that it uses for communication. It consists of
-many pods. It can support TLS connections.
+server architecture. That client could be a local installation of IAG5 or an Itential Platform
+server. It requires an Etcd cluster that it uses for communication. It consists of many pods. It
+can support TLS connections.
 
-The creation of the Etcd cluster is outside of the scope of this chart.
+The creation of the Etcd cluster is outside of the scope of this chart. Itential routinely uses the
+helm chart provided by [bitnami](https://artifacthub.io/packages/helm/bitnami/etcd)
 
-To create this environment the values file must provide the appropriate values for `serverMode` and
-`runnerMode`. When the number of servers is greater than zero the chart will create a pod as a
-server. When the number of runners is greater than zero the chart will create pods as runners. The
-values in `allMode` effect all pods. These configuration sections in values.yaml file can also
+To create this environment the values file must provide the appropriate values for `serverSettings` and
+`runnerSettings`. When the replicaCount is greater than zero in the `serverSettings` config
+object the chart will create a pod as a server. When the replicaCount is greater than zero in the
+`runnerSettings` config object the chart will create that many runners. The values in
+`applicationSettings` effect all pods. These configuration sections in values.yaml file can also
 contain all of the environment variables for a pod. For example, this will create a distributed
 server:
 
 ```yaml
 # Set the number of runner replicas to the desired number of runners
-runnerMode:
+runnerSettings:
   replicaCount: 5
   env:
     ...
 
 # Set the number of server replicas to one
-serverMode:
+serverSettings:
   replicaCount: 1
   env:
-    - name: GATEWAY_SERVER_DISTRIBUTED_EXECUTION
-      value: "true"
+    GATEWAY_SERVER_DISTRIBUTED_EXECUTION: true
     ...
 
 # Configure all pods with these values
-allMode:
+applicationSettings:
   env:
-    - name: GATEWAY_COMMANDER_ENABLED
-      value: "false"
-    - name: GATEWAY_STORE_BACKEND
-      value: "etcd"
-    - name: GATEWAY_STORE_ETCD_HOSTS
-      value: "etcd.default.svc.cluster.local:2379"
-    - name: GATEWAY_STORE_ETCD_USE_TLS
-      value: "true"
+    GATEWAY_COMMANDER_ENABLED: false
+    GATEWAY_STORE_BACKEND: "etcd"
+    GATEWAY_STORE_ETCD_HOSTS: "etcd.default.svc.cluster.local:2379"
+    GATEWAY_STORE_ETCD_USE_TLS: true
     # As appropriate if using TLS and the above is true
     # The chart will mount these as secrets
-    - name: GATEWAY_STORE_ETCD_CA_CERTIFICATE_FILE
-      value: /etc/ssl/etcd/ca.crt
-    - name: GATEWAY_STORE_ETCD_CERTIFICATE_FILE
-      value: /etc/ssl/etcd/tls-client.crt
-    - name: GATEWAY_STORE_ETCD_CLIENT_CERT_AUTH
-      value: "true"
-    - name: GATEWAY_STORE_ETCD_PRIVATE_KEY_FILE
-      value: /etc/ssl/etcd/tls-client.key
+    GATEWAY_STORE_ETCD_CA_CERTIFICATE_FILE: /etc/ssl/etcd/ca.crt
+    GATEWAY_STORE_ETCD_CERTIFICATE_FILE: /etc/ssl/etcd/tls-client.crt
+    GATEWAY_STORE_ETCD_CLIENT_CERT_AUTH: true
+    GATEWAY_STORE_ETCD_PRIVATE_KEY_FILE: /etc/ssl/etcd/tls-client.key
 ```
 
 ### Run the Chart
-Clone this repo, modify the values file appropriately, and install into your Kubernetes environment
-by doing the following:
+
+Clone this repo, adhere to the requirements, modify values.yaml appropriately, and install into your
+Kubernetes environment by doing the following:
 
 ```bash
 helm install iag5 ./iag5

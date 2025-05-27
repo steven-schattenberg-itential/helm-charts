@@ -16,7 +16,7 @@ spec:
     kind: {{ .Values.certificate.issuerRef.kind }}
   commonName: {{ .Values.certificate.hostname }}
   dnsNames:
-    - {{ .Values.ingress.hostname }}
+    - {{ .Values.certificate.hostname }}
   renewBefore: {{ .Values.certificate.renewBefore }}
   duration: {{ .Values.certificate.duration }}
 {{- end -}}

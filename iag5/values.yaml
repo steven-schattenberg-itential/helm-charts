@@ -2,7 +2,9 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# replicaCount: 1
+# These are used by the NOTES.txt template
+hostname: iag5.pet-sbx.itential.io
+port: 50051
 
 # image The Itential image to use, its version, and its location
 image:
@@ -15,37 +17,11 @@ image:
 imagePullSecrets:
   - name: "jfrogcred"
 
-# nameOverride: ""
-# fullnameOverride: ""
-
-# serviceAccount:
-#   # Specifies whether a service account should be created
-#   create: true
-#   # Automatically mount a ServiceAccount's API credentials?
-#   automount: true
-#   # Annotations to add to the service account
-#   annotations: {}
-#   # The name of the service account to use.
-#   # If not set and create is true, a name is generated using the fullname template
-#   name: ""
-
 podAnnotations: {}
 podLabels: {}
-
 podSecurityContext: {}
-  # fsGroup: 2000
-
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
-# service:
-#   type: ClusterIP
-#   port: 80
 # service The Kubernetes service object for this application
 service:
   # type The service type
@@ -88,7 +64,6 @@ issuer:
 
 certificate:
   enabled: true
-  # selfsigned: true
   issuerRef:
     name: iag5-ca-issuer
     kind: Issuer
@@ -97,25 +72,33 @@ certificate:
   hostname: iag5.pet-sbx.itential.io
 
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
 
-# livenessProbe:
-#   httpGet:
-#     path: /
-#     port: http
-# readinessProbe:
-#   httpGet:
-#     path: /
-#     port: http
+livenessProbe:
+  enabled: true
+  settings:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - pgrep iagctl > /dev/null
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  settings:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - pgrep iagctl > /dev/null
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 2
+    successThreshold: 1
+    failureThreshold: 3
 
 autoscaling:
   enabled: false
@@ -124,70 +107,43 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-runnerMode:
+runnerSettings:
   replicaCount: 3
   env:
-    - name: GATEWAY_RUNNER_CERTIFICATE_FILE
-      value: /etc/ssl/gateway/tls.crt
-    - name: GATEWAY_RUNNER_PRIVATE_KEY_FILE
-      value: /etc/ssl/gateway/tls.key
-    - name: GATEWAY_RUNNER_LISTEN_ADDRESS
-      value: "0.0.0.0"
-    - name: GATEWAY_RUNNER_USE_TLS
-      value: "true"
-serverMode:
+    GATEWAY_RUNNER_CERTIFICATE_FILE: /etc/ssl/gateway/tls.crt
+    GATEWAY_RUNNER_PRIVATE_KEY_FILE: /etc/ssl/gateway/tls.key
+    GATEWAY_RUNNER_LISTEN_ADDRESS: "0.0.0.0"
+    GATEWAY_RUNNER_USE_TLS: false
+
+serverSettings:
   replicaCount: 1
   env:
-    - name: GATEWAY_SERVER_DISTRIBUTED_EXECUTION
-      value: "true"
-    - name: GATEWAY_SERVER_CERTIFICATE_FILE
-      value: /etc/ssl/gateway/tls.crt
-    - name: GATEWAY_SERVER_PRIVATE_KEY_FILE
-      value: /etc/ssl/gateway/tls.key
-    - name: GATEWAY_SERVER_LISTEN_ADDRESS
-      value: "0.0.0.0"
-    - name: GATEWAY_SERVER_USE_TLS
-      value: "true"
-allMode:
+    GATEWAY_SERVER_DISTRIBUTED_EXECUTION: true
+    GATEWAY_SERVER_CERTIFICATE_FILE: "/etc/ssl/gateway/tls.crt"
+    GATEWAY_SERVER_PRIVATE_KEY_FILE: "/etc/ssl/gateway/tls.key"
+    GATEWAY_SERVER_LISTEN_ADDRESS: "0.0.0.0"
+    GATEWAY_SERVER_USE_TLS: false
+
+applicationSettings:
   etcdTlsSecretName: etcd-tls-secret
-  GATEWAY_STORE_ETCD_USE_TLS: true
   env:
-    - name: GATEWAY_LOG_LEVEL
-      value: DEBUG
-    - name: GATEWAY_APPLICATION_CA_CERTIFICATE_FILE
-      value: /etc/ssl/gateway/ca.crt
-    - name: GATEWAY_COMMANDER_ENABLED
-      value: "false"
-    - name: GATEWAY_STORE_BACKEND
-      value: "etcd"
-    - name: GATEWAY_STORE_ETCD_HOSTS
-      value: "etcd.default.svc.cluster.local:2379"
-    - name: GATEWAY_STORE_ETCD_USE_TLS
-      value: "true"
-    - name: GATEWAY_STORE_ETCD_CA_CERTIFICATE_FILE
-      value: /etc/ssl/etcd/ca.crt
-    - name: GATEWAY_STORE_ETCD_CERTIFICATE_FILE
-      value: /etc/ssl/etcd/tls-client.crt
-    - name: GATEWAY_STORE_ETCD_CLIENT_CERT_AUTH
-      value: "true"
-    - name: GATEWAY_STORE_ETCD_PRIVATE_KEY_FILE
-      value: /etc/ssl/etcd/tls-client.key
+    GATEWAY_APPLICATION_CA_CERTIFICATE_FILE: /etc/ssl/gateway/ca.crt
+    GATEWAY_LOG_LEVEL: DEBUG
+    GATEWAY_COMMANDER_ENABLED: false
+    GATEWAY_STORE_BACKEND: etcd
+    GATEWAY_STORE_ETCD_HOSTS: "etcd.default.svc.cluster.local:2379"
+    GATEWAY_STORE_ETCD_USE_TLS: true
+    GATEWAY_STORE_ETCD_CA_CERTIFICATE_FILE: /etc/ssl/etcd/ca.crt
+    GATEWAY_STORE_ETCD_CERTIFICATE_FILE: /etc/ssl/etcd/tls-client.crt
+    GATEWAY_STORE_ETCD_CLIENT_CERT_AUTH: true
+    GATEWAY_STORE_ETCD_PRIVATE_KEY_FILE: /etc/ssl/etcd/tls-client.key
 
 # Additional volumes on the output Deployment definition.
 volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
 
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
 
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
