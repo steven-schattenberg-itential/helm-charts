@@ -102,10 +102,6 @@ readinessProbe:
 
 autoscaling:
   enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
 
 runnerSettings:
   replicaCount: 3
@@ -128,11 +124,11 @@ applicationSettings:
   etcdTlsSecretName: etcd-tls-secret
   env:
     GATEWAY_APPLICATION_CA_CERTIFICATE_FILE: /etc/ssl/gateway/ca.crt
-    GATEWAY_LOG_LEVEL: DEBUG
+    GATEWAY_LOG_LEVEL: INFO
     GATEWAY_COMMANDER_ENABLED: false
     GATEWAY_STORE_BACKEND: etcd
     GATEWAY_STORE_ETCD_HOSTS: "etcd.default.svc.cluster.local:2379"
-    GATEWAY_STORE_ETCD_USE_TLS: true
+    GATEWAY_STORE_ETCD_USE_TLS: false
     GATEWAY_STORE_ETCD_CA_CERTIFICATE_FILE: /etc/ssl/etcd/ca.crt
     GATEWAY_STORE_ETCD_CERTIFICATE_FILE: /etc/ssl/etcd/tls-client.crt
     GATEWAY_STORE_ETCD_CLIENT_CERT_AUTH: true
