@@ -105,14 +105,44 @@ applicationSettings:
     GATEWAY_COMMANDER_ENABLED: false
     GATEWAY_STORE_BACKEND: "etcd"
     GATEWAY_STORE_ETCD_HOSTS: "etcd.default.svc.cluster.local:2379"
+```
+
+### Using TLS connections
+
+To enable TLS connections between IAG5 and Etcd you can use a configuration like this:
+
+```yaml
+# Set the number of runner replicas to the desired number of runners
+runnerSettings:
+  replicaCount: 5
+  env:
+    ...
+
+# Set the number of server replicas to one
+serverSettings:
+  replicaCount: 1
+  env:
+    GATEWAY_SERVER_DISTRIBUTED_EXECUTION: true
+    ...
+
+# Configure all pods with these values
+applicationSettings:
+  etcdTlsSecretName: etcd-tls-secret
+  env:
+    GATEWAY_COMMANDER_ENABLED: false
+    GATEWAY_STORE_BACKEND: "etcd"
+    GATEWAY_STORE_ETCD_HOSTS: "etcd.default.svc.cluster.local:2379"
     GATEWAY_STORE_ETCD_USE_TLS: true
-    # As appropriate if using TLS and the above is true
-    # The chart will mount these as secrets
     GATEWAY_STORE_ETCD_CA_CERTIFICATE_FILE: /etc/ssl/etcd/ca.crt
     GATEWAY_STORE_ETCD_CERTIFICATE_FILE: /etc/ssl/etcd/tls-client.crt
     GATEWAY_STORE_ETCD_CLIENT_CERT_AUTH: true
     GATEWAY_STORE_ETCD_PRIVATE_KEY_FILE: /etc/ssl/etcd/tls-client.key
 ```
+
+This requires an additional Secret to be installed in the Kubernetes environment. That Secret's
+name must be provided to the pods as the value of `applicationSettings.etcdTlsSecretName`. The
+Deployments will mount this secret as files whose paths are described by `GATEWAY_STORE_ETCD_CA_CERTIFICATE_FILE`, `GATEWAY_STORE_ETCD_CERTIFICATE_FILE`, and
+`GATEWAY_STORE_ETCD_PRIVATE_KEY_FILE`.
 
 ### Run the Chart
 

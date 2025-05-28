@@ -3,7 +3,7 @@ templates:
   - templates/service.yaml
 
 tests:
-  - it: should render a Service with correct name, ports, and selector
+  - it: should render a Service with correct name, ports
     set:
       service:
         name: test-service
@@ -37,6 +37,16 @@ tests:
       - equal:
           path: spec.ports[0].name
           value: iag5-service-port
+
+  - it: should include a selector that can route to the server component (and not the runners)
+    set:
+      service:
+        name: test-service
+        type: ClusterIP
+        port: 8080
+        targetPort: 8080
+        annotations: {}
+    asserts:
       - equal:
           path: spec.selector["app.kubernetes.io/component"]
           value: server
