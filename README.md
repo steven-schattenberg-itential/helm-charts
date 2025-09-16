@@ -1,3 +1,9 @@
+__This project has been archived and replaced by the following repos.__
+
+- [Itential Automation Platform (IAP)](https://github.com/itential/iap-helm)
+- [Itential Automation Gateway 4](https://github.com/itential/iag4-helm)
+- [Itential Automation Gateway 5](https://github.com/itential/iag5-helm)
+
 # Helm charts for Itential Automation Platform and Itential Automation Gateway
 This repo contains helm charts for running Itential Automation Platform and Itential Automation Gateway in Kubernetes. This repo contains two charts: iap and iag.
 
